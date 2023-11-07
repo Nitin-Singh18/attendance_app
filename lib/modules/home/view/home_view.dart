@@ -1,11 +1,13 @@
-import 'package:attendance_app/const/app_color.dart';
-import 'package:attendance_app/data/widget/c_button.dart';
-import 'package:attendance_app/data/widget/tile.dart';
-import 'package:attendance_app/modules/home/view_model/home_view_model.dart';
-import 'package:attendance_app/modules/scanner/view/scanner_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+
+import '../../../const/app_color.dart';
+import '../../../data/widget/c_button.dart';
+import '../../../data/widget/tile.dart';
+import '../../scanner/view/attendance_confirmation_view.dart';
+import '../../scanner/view/scanner_view.dart';
+import '../view_model/home_view_model.dart';
 
 class HomeView extends ConsumerStatefulWidget {
   const HomeView({super.key});
@@ -47,14 +49,16 @@ class _HomeViewState extends ConsumerState<HomeView> {
           ),
         ],
       ),
-      body: ListView.builder(
-        itemCount: watchingProvider.attendanceItems.length,
-        itemBuilder: (context, index) {
-          final attendanceItem = watchingProvider.attendanceItems[index];
-          return AttendanceTile(
-            attendanceItem: attendanceItem,
-          );
-        },
+      body: SafeArea(
+        child: ListView.builder(
+          itemCount: watchingProvider.attendanceItems.length,
+          itemBuilder: (context, index) {
+            final attendanceItem = watchingProvider.attendanceItems[index];
+            return AttendanceTile(
+              attendanceItem: attendanceItem,
+            );
+          },
+        ),
       ),
       bottomNavigationBar: CButton(
         title: 'Scan',
@@ -62,7 +66,10 @@ class _HomeViewState extends ConsumerState<HomeView> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => const ScannerView(),
+              builder: (context) =>
+                  ref.read(homeViewModelProvider).currentAttendance != null
+                      ? const ScannerView()
+                      : const AttendanceConfirmationView(),
             ),
           );
         },

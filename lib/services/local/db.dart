@@ -1,6 +1,7 @@
-import 'package:attendance_app/data/model/attendance_model.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
+
+import '../../data/model/attendance_model.dart';
 
 class IsarDatabase {
   static late Isar _isar;

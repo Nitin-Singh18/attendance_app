@@ -1,6 +1,7 @@
-import 'package:attendance_app/data/model/attendance_model.dart';
-import 'package:attendance_app/services/local/db.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../data/model/attendance_model.dart';
+import '../../../services/local/db.dart';
 
 class HomeViewState {
   final List<AttendanceModel> attendanceItems;
@@ -12,7 +13,7 @@ class HomeViewState {
       AttendanceModel? currentAttendance}) {
     return HomeViewState(
       attendanceItems: attendanceItems ?? this.attendanceItems,
-      currentAttendance: currentAttendance ?? this.currentAttendance,
+      currentAttendance: currentAttendance,
     );
   }
 }
@@ -30,44 +31,56 @@ class HomeViewModel extends StateNotifier<HomeViewState> {
     await fetchAttendanceItems();
     final DateTime currentDate =
         DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
-    final bool isAlreadyAdded = state.attendanceItems.any((element) =>
-        element.date.year == currentDate.year &&
-        element.date.month == currentDate.month &&
-        element.date.day == currentDate.day);
+    final bool isAlreadyAdded =
+        isAttendanceItemAlreadyAdded(state.attendanceItems, currentDate);
     if (!isAlreadyAdded) {
       final todayAttendance = AttendanceModel()
         ..date = currentDate
         ..status = 'Absent';
       await db.insertAttendance(todayAttendance);
-      final updatedList = [...state.attendanceItems, todayAttendance];
 
       state = state.copyWith(
-          attendanceItems: updatedList, currentAttendance: todayAttendance);
+          attendanceItems: [...state.attendanceItems, todayAttendance],
+          currentAttendance: todayAttendance);
     } else {
-      final attendanceItem = state.attendanceItems
-          .where((element) =>
-              element.date.year == currentDate.year &&
-              element.date.month == currentDate.month &&
-              element.date.day == currentDate.day)
-          .first;
+      final attendanceItem =
+          getAttendanceItemByDate(state.attendanceItems, currentDate);
       if (attendanceItem.status != 'Present') {
         state = state.copyWith(currentAttendance: attendanceItem);
       }
     }
   }
 
-  void updateAttendanceStatus(String status, DateTime time, DateTime date) {
-    final indexOfCurrentItem = state.attendanceItems.indexWhere((element) =>
+  bool isAttendanceItemAlreadyAdded(
+      List<AttendanceModel> attendanceItems, DateTime currentDate) {
+    return attendanceItems.any((element) =>
+        element.date.year == currentDate.year &&
+        element.date.month == currentDate.month &&
+        element.date.day == currentDate.day);
+  }
+
+  AttendanceModel getAttendanceItemByDate(
+      List<AttendanceModel> attendanceItems, DateTime date) {
+    return attendanceItems.firstWhere((element) =>
         element.date.year == date.year &&
         element.date.month == date.month &&
         element.date.day == date.day);
-    AttendanceModel attendanceItem = state.attendanceItems[indexOfCurrentItem];
-    attendanceItem
-      ..status = status
-      ..time = time;
-    final attendanceItems = state.attendanceItems;
-    attendanceItems[indexOfCurrentItem] = attendanceItem;
-    state = state.copyWith(attendanceItems: attendanceItems);
+  }
+
+  void updateTodayAttendanceState(String status, DateTime time, DateTime date) {
+    final indexOfTodayAttendance = state.attendanceItems.indexWhere((element) =>
+        element.date.year == date.year &&
+        element.date.month == date.month &&
+        element.date.day == date.day);
+    AttendanceModel attendanceItem =
+        state.attendanceItems[indexOfTodayAttendance]
+          ..status = status
+          ..time = time;
+
+    final updatedAttendanceItems = state.attendanceItems;
+    updatedAttendanceItems[indexOfTodayAttendance] = attendanceItem;
+    state = state.copyWith(
+        attendanceItems: updatedAttendanceItems, currentAttendance: null);
   }
 
   Future<void> fetchAttendanceItems() async {

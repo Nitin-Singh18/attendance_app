@@ -1,9 +1,9 @@
-import 'package:attendance_app/data/model/attendance_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 
 import '../../const/app_color.dart';
+import '../model/attendance_model.dart';
 
 class AttendanceTile extends StatelessWidget {
   final AttendanceModel attendanceItem;

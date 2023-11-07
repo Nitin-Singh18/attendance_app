@@ -1,7 +1,8 @@
-import 'package:attendance_app/modules/home/view_model/home_view_model.dart';
-import 'package:attendance_app/services/local/db.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+
+import '../../../services/local/db.dart';
+import '../../home/view_model/home_view_model.dart';
 
 final scannerViewModelProvider =
     StateNotifierProvider<ScannerViewModel, DateTime>(
@@ -22,7 +23,7 @@ class ScannerViewModel extends StateNotifier<DateTime> {
       await db.updateAttendance(data, state, currentAttendanceItem);
       ref
           .read(homeViewModelProvider.notifier)
-          .updateAttendanceStatus(data, state, currentAttendanceItem.date);
+          .updateTodayAttendanceState(data, state, currentAttendanceItem.date);
     }
   }
 }
