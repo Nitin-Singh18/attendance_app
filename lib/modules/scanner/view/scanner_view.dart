@@ -5,18 +5,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
-class ScannerView extends StatefulWidget {
+class ScannerView extends ConsumerStatefulWidget {
   const ScannerView({super.key});
 
   @override
-  State<ScannerView> createState() => _ScannerViewState();
+  ConsumerState<ScannerView> createState() => _ScannerViewState();
 }
 
-class _ScannerViewState extends State<ScannerView> {
+class _ScannerViewState extends ConsumerState<ScannerView> {
   final MobileScannerController _scannerController = MobileScannerController();
 
   @override
   Widget build(BuildContext context) {
+    final providerMethods = ref.read(scannerViewModelProvider.notifier);
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -37,6 +38,7 @@ class _ScannerViewState extends State<ScannerView> {
               child: MobileScanner(
                 controller: _scannerController,
                 onDetect: (BarcodeCapture code) {
+                  providerMethods.markPresent(code);
                   _scannerController
                     ..stop()
                     ..dispose();

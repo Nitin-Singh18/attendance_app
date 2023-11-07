@@ -1,14 +1,35 @@
 import 'package:attendance_app/const/app_color.dart';
 import 'package:attendance_app/data/widget/c_button.dart';
 import 'package:attendance_app/data/widget/tile.dart';
+import 'package:attendance_app/modules/home/view_model/home_view_model.dart';
+import 'package:attendance_app/modules/scanner/view/scanner_view.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-class HomeView extends StatelessWidget {
+class HomeView extends ConsumerStatefulWidget {
   const HomeView({super.key});
 
   @override
+  ConsumerState<HomeView> createState() => _HomeViewState();
+}
+
+class _HomeViewState extends ConsumerState<HomeView> {
+  @override
+  void initState() {
+    Future.delayed(const Duration(seconds: 0), () {
+      addTodayAttendance();
+    });
+    super.initState();
+  }
+
+  void addTodayAttendance() async {
+    await ref.read(homeViewModelProvider.notifier).createTodayAttendance();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final watchingProvider = ref.watch(homeViewModelProvider);
     return Scaffold(
       backgroundColor: AppColor.backGroundColor,
       appBar: AppBar(
@@ -27,19 +48,25 @@ class HomeView extends StatelessWidget {
         ],
       ),
       body: ListView.builder(
-        itemCount: 5,
+        itemCount: watchingProvider.attendanceItems.length,
         itemBuilder: (context, index) {
-          return const AttendanceTile();
+          final attendanceItem = watchingProvider.attendanceItems[index];
+          return AttendanceTile(
+            attendanceItem: attendanceItem,
+          );
         },
       ),
-      bottomNavigationBar: CButton(title: 'Scan', onTap: () {}),
-
-      // Container(
-      //   height: 60,
-      //   color: Colors.white,
-      //   padding: EdgeInsets.only(left: 12.w, right: 12.w, bottom: 14.h),
-      //   child: Container(),
-      // ),
+      bottomNavigationBar: CButton(
+        title: 'Scan',
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const ScannerView(),
+            ),
+          );
+        },
+      ),
     );
   }
 }
