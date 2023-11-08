@@ -1,13 +1,18 @@
+import 'package:attendance_app/const/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../../const/app_color.dart';
+import '../../../services/local/shared_preferences.dart';
 import '../view_model/scanner_view_model.dart';
 
+enum ScanType { scan, save }
+
 class ScannerView extends ConsumerStatefulWidget {
-  const ScannerView({super.key});
+  final ScanType scanType;
+  const ScannerView({required this.scanType, super.key});
 
   @override
   ConsumerState<ScannerView> createState() => _ScannerViewState();
@@ -15,6 +20,16 @@ class ScannerView extends ConsumerStatefulWidget {
 
 class _ScannerViewState extends ConsumerState<ScannerView> {
   final MobileScannerController _scannerController = MobileScannerController();
+
+  @override
+  void initState() {
+    openSP();
+    super.initState();
+  }
+
+  openSP() async {
+    await SharedPref.open();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,11 +55,30 @@ class _ScannerViewState extends ConsumerState<ScannerView> {
                 child: MobileScanner(
                   controller: _scannerController,
                   onDetect: (BarcodeCapture code) {
-                    providerMethods.markPresent(code);
-                    _scannerController
-                      ..stop()
-                      ..dispose();
-
+                    switch (widget.scanType) {
+                      case ScanType.scan:
+                        providerMethods.markPresent(code, () {
+                          showSnackBar(context);
+                        });
+                        _scannerController
+                          ..stop()
+                          ..dispose();
+                      case ScanType.save:
+                        providerMethods.saveQR(code);
+                    }
+                    // if (widget.scanType == ScanType.scan) {
+                    //   providerMethods.markPresent(code, () {
+                    //     print(
+                    //         '----------------------------Callback called-----------------------------------------');
+                    //     showSnackBar(context);
+                    //   });
+                    //   _scannerController
+                    //     ..stop()
+                    //     ..dispose();
+                    // }
+                    // if (widget.scanType == ScanType.save) {
+                    //   providerMethods.saveQR(code);
+                    // }
                     Navigator.pop(context);
                   },
                 ),

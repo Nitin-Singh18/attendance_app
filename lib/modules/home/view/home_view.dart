@@ -1,3 +1,4 @@
+import 'package:attendance_app/modules/setting/view/setting_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -40,7 +41,12 @@ class _HomeViewState extends ConsumerState<HomeView> {
           Padding(
             padding: EdgeInsets.only(right: 14.0.w),
             child: InkWell(
-              onTap: () {},
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SettingView(),
+                ),
+              ),
               child: const Icon(
                 Icons.settings,
                 color: AppColor.mainColor,
@@ -68,7 +74,9 @@ class _HomeViewState extends ConsumerState<HomeView> {
             MaterialPageRoute(
               builder: (context) =>
                   ref.read(homeViewModelProvider).currentAttendance != null
-                      ? const ScannerView()
+                      ? const ScannerView(
+                          scanType: ScanType.scan,
+                        )
                       : const AttendanceConfirmationView(),
             ),
           );

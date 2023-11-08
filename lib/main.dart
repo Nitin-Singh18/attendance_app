@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'modules/home/view/home_view.dart';
-import 'services/local/db.dart';
+import 'services/local/isar_db.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

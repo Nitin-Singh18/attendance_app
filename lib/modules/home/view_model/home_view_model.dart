@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/model/attendance_model.dart';
-import '../../../services/local/db.dart';
+import '../../../services/local/isar_db.dart';
 
 class HomeViewState {
   final List<AttendanceModel> attendanceItems;
@@ -32,7 +32,7 @@ class HomeViewModel extends StateNotifier<HomeViewState> {
     final DateTime currentDate =
         DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
     final bool isAlreadyAdded =
-        isAttendanceItemAlreadyAdded(state.attendanceItems, currentDate);
+        _isAttendanceItemAlreadyAdded(state.attendanceItems, currentDate);
     if (!isAlreadyAdded) {
       final todayAttendance = AttendanceModel()
         ..date = currentDate
@@ -40,18 +40,19 @@ class HomeViewModel extends StateNotifier<HomeViewState> {
       await db.insertAttendance(todayAttendance);
 
       state = state.copyWith(
-          attendanceItems: [...state.attendanceItems, todayAttendance],
+          attendanceItems:
+              [...state.attendanceItems, todayAttendance].reversed.toList(),
           currentAttendance: todayAttendance);
     } else {
       final attendanceItem =
-          getAttendanceItemByDate(state.attendanceItems, currentDate);
+          _getAttendanceItemByDate(state.attendanceItems, currentDate);
       if (attendanceItem.status != 'Present') {
         state = state.copyWith(currentAttendance: attendanceItem);
       }
     }
   }
 
-  bool isAttendanceItemAlreadyAdded(
+  bool _isAttendanceItemAlreadyAdded(
       List<AttendanceModel> attendanceItems, DateTime currentDate) {
     return attendanceItems.any((element) =>
         element.date.year == currentDate.year &&
@@ -59,7 +60,7 @@ class HomeViewModel extends StateNotifier<HomeViewState> {
         element.date.day == currentDate.day);
   }
 
-  AttendanceModel getAttendanceItemByDate(
+  AttendanceModel _getAttendanceItemByDate(
       List<AttendanceModel> attendanceItems, DateTime date) {
     return attendanceItems.firstWhere((element) =>
         element.date.year == date.year &&
