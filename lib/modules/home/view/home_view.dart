@@ -1,3 +1,4 @@
+import 'package:attendance_app/modules/calendar/view/calendar_view.dart';
 import 'package:attendance_app/modules/setting/view/setting_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -38,6 +39,14 @@ class _HomeViewState extends ConsumerState<HomeView> {
       appBar: AppBar(
         backgroundColor: AppColor.backGroundColor,
         actions: [
+          IconButton(
+            onPressed: () => Navigator.push(context,
+                MaterialPageRoute(builder: (context) => const CalendarView())),
+            icon: const Icon(
+              Icons.calendar_month,
+              color: AppColor.mainColor,
+            ),
+          ),
           Padding(
             padding: EdgeInsets.only(right: 14.0.w),
             child: InkWell(
