@@ -1,14 +1,15 @@
-import 'package:attendance_app/modules/calendar/view/calendar_view.dart';
-import 'package:attendance_app/modules/setting/view/setting_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../const/app_color.dart';
+import '../../../const/constants.dart';
 import '../../../data/widget/c_button.dart';
 import '../../../data/widget/tile.dart';
+import '../../calendar/view/calendar_view.dart';
 import '../../scanner/view/attendance_confirmation_view.dart';
 import '../../scanner/view/scanner_view.dart';
+import '../../setting/view/setting_view.dart';
 import '../view_model/home_view_model.dart';
 
 class HomeView extends ConsumerStatefulWidget {
@@ -34,10 +35,15 @@ class _HomeViewState extends ConsumerState<HomeView> {
   @override
   Widget build(BuildContext context) {
     final watchingProvider = ref.watch(homeViewModelProvider);
+
     return Scaffold(
       backgroundColor: AppColor.backGroundColor,
       appBar: AppBar(
         backgroundColor: AppColor.backGroundColor,
+        title: Text(
+          '${watchingProvider.attendancePercentage.toStringAsFixed(2)}%',
+          style: TextStyle(color: AppColor.mainColor, fontSize: 22.sp),
+        ),
         actions: [
           IconButton(
             onPressed: () => Navigator.push(context,
@@ -82,7 +88,8 @@ class _HomeViewState extends ConsumerState<HomeView> {
             context,
             MaterialPageRoute(
               builder: (context) =>
-                  ref.read(homeViewModelProvider).currentAttendance != null
+                  ref.read(homeViewModelProvider).currentAttendance!.status !=
+                          AppString.qrValue
                       ? const ScannerView(
                           scanType: ScanType.scan,
                         )

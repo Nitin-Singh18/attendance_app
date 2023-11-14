@@ -6,14 +6,20 @@ import '../../../services/local/isar_db.dart';
 class HomeViewState {
   final List<AttendanceModel> attendanceItems;
   final AttendanceModel? currentAttendance;
-  HomeViewState({required this.attendanceItems, this.currentAttendance});
+  final double attendancePercentage;
+  HomeViewState(
+      {required this.attendanceItems,
+      this.currentAttendance,
+      required this.attendancePercentage});
 
   HomeViewState copyWith(
       {List<AttendanceModel>? attendanceItems,
-      AttendanceModel? currentAttendance}) {
+      AttendanceModel? currentAttendance,
+      double? attendancePercentage}) {
     return HomeViewState(
       attendanceItems: attendanceItems ?? this.attendanceItems,
-      currentAttendance: currentAttendance,
+      currentAttendance: currentAttendance ?? this.currentAttendance,
+      attendancePercentage: attendancePercentage ?? this.attendancePercentage,
     );
   }
 }
@@ -23,7 +29,8 @@ final homeViewModelProvider =
         (ref) => HomeViewModel());
 
 class HomeViewModel extends StateNotifier<HomeViewState> {
-  HomeViewModel() : super(HomeViewState(attendanceItems: []));
+  HomeViewModel()
+      : super(HomeViewState(attendanceItems: [], attendancePercentage: 0));
 
   IsarDatabase db = IsarDatabase();
 
@@ -36,6 +43,7 @@ class HomeViewModel extends StateNotifier<HomeViewState> {
     if (!isMissing) {
       final bool isAlreadyAdded =
           _isAttendanceItemAlreadyAdded(state.attendanceItems, currentDate);
+
       if (!isAlreadyAdded) {
         final todayAttendance = AttendanceModel()
           ..date = currentDate
@@ -45,6 +53,7 @@ class HomeViewModel extends StateNotifier<HomeViewState> {
         state = state.copyWith(
             attendanceItems: [todayAttendance, ...state.attendanceItems],
             currentAttendance: todayAttendance);
+        calculateAttendancePercentage();
       } else {
         _addCurrentAttendance(currentDate);
       }
@@ -56,9 +65,11 @@ class HomeViewModel extends StateNotifier<HomeViewState> {
   void _addCurrentAttendance(DateTime currentDate) {
     final attendanceItem =
         _getAttendanceItemByDate(state.attendanceItems, currentDate);
+
     if (attendanceItem.status != 'Present') {
       state = state.copyWith(currentAttendance: attendanceItem);
     }
+    calculateAttendancePercentage();
   }
 
   bool _checkForMissedDates(DateTime currentDate) {
@@ -102,18 +113,7 @@ class HomeViewModel extends StateNotifier<HomeViewState> {
     updatedAttendanceList.sort((a, b) => b.date.compareTo(a.date));
 
     state = state.copyWith(attendanceItems: updatedAttendanceList);
-  }
-
-  double calculateAttendancePercentage() {
-    // Calculate the total number of days and days present
-    final totalDays = state.attendanceItems.length;
-    final daysPresent =
-        state.attendanceItems.where((e) => e.status == 'Present').length;
-
-    // Calculate the percentage
-    final attendancePercentage = (daysPresent / totalDays) * 100;
-
-    return attendancePercentage;
+    calculateAttendancePercentage();
   }
 
   bool _isAttendanceItemAlreadyAdded(
@@ -132,6 +132,18 @@ class HomeViewModel extends StateNotifier<HomeViewState> {
         element.date.day == date.day);
   }
 
+  void calculateAttendancePercentage() {
+    // Calculate the total number of days and days present
+    final totalDays = state.attendanceItems.length;
+    final daysPresent =
+        state.attendanceItems.where((e) => e.status == 'Present').length;
+
+    // Calculate the percentage
+    final attendancePercentage = (daysPresent / totalDays) * 100;
+
+    state = state.copyWith(attendancePercentage: attendancePercentage);
+  }
+
   void updateTodayAttendanceState(String status, DateTime time, DateTime date) {
     final indexOfTodayAttendance = state.attendanceItems.indexWhere((element) =>
         element.date.year == date.year &&
@@ -144,8 +156,8 @@ class HomeViewModel extends StateNotifier<HomeViewState> {
 
     final updatedAttendanceItems = state.attendanceItems;
     updatedAttendanceItems[indexOfTodayAttendance] = attendanceItem;
-    state = state.copyWith(
-        attendanceItems: updatedAttendanceItems, currentAttendance: null);
+    state = state.copyWith(attendanceItems: updatedAttendanceItems);
+    calculateAttendancePercentage();
   }
 
   Future<void> fetchAttendanceItems() async {
