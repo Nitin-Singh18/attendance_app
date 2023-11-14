@@ -31,25 +31,89 @@ class HomeViewModel extends StateNotifier<HomeViewState> {
     await fetchAttendanceItems();
     final DateTime currentDate =
         DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
-    final bool isAlreadyAdded =
-        _isAttendanceItemAlreadyAdded(state.attendanceItems, currentDate);
-    if (!isAlreadyAdded) {
-      final todayAttendance = AttendanceModel()
-        ..date = currentDate
-        ..status = 'Absent';
-      await db.insertAttendance(todayAttendance);
 
-      state = state.copyWith(
-          attendanceItems:
-              [...state.attendanceItems, todayAttendance].reversed.toList(),
-          currentAttendance: todayAttendance);
-    } else {
-      final attendanceItem =
-          _getAttendanceItemByDate(state.attendanceItems, currentDate);
-      if (attendanceItem.status != 'Present') {
-        state = state.copyWith(currentAttendance: attendanceItem);
+    final bool isMissing = _checkForMissedDates(currentDate);
+    if (!isMissing) {
+      final bool isAlreadyAdded =
+          _isAttendanceItemAlreadyAdded(state.attendanceItems, currentDate);
+      if (!isAlreadyAdded) {
+        final todayAttendance = AttendanceModel()
+          ..date = currentDate
+          ..status = 'Absent';
+        await db.insertAttendance(todayAttendance);
+
+        state = state.copyWith(
+            attendanceItems: [todayAttendance, ...state.attendanceItems],
+            currentAttendance: todayAttendance);
+      } else {
+        _addCurrentAttendance(currentDate);
       }
+    } else {
+      _addCurrentAttendance(currentDate);
     }
+  }
+
+  void _addCurrentAttendance(DateTime currentDate) {
+    final attendanceItem =
+        _getAttendanceItemByDate(state.attendanceItems, currentDate);
+    if (attendanceItem.status != 'Present') {
+      state = state.copyWith(currentAttendance: attendanceItem);
+    }
+  }
+
+  bool _checkForMissedDates(DateTime currentDate) {
+    DateTime? lastRecordedDate;
+    int? differenceInDays;
+    if (state.attendanceItems.isNotEmpty) {
+      lastRecordedDate = state.attendanceItems.first.date;
+
+      differenceInDays = currentDate.difference(lastRecordedDate).inDays;
+
+      if (differenceInDays != 1) {
+        _addMissingDates(differenceInDays, lastRecordedDate);
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      return false;
+    }
+  }
+
+  void _addMissingDates(int differenceInDays, DateTime lastRecordedDate) async {
+    final List<DateTime> missingDates = [];
+    for (int i = 1; i <= differenceInDays; i++) {
+      final DateTime missingDate = lastRecordedDate.add(Duration(days: i));
+      missingDates.add(missingDate);
+    }
+
+    final List<AttendanceModel> missingAttendanceItems = [];
+    for (final DateTime missingDate in missingDates) {
+      final missingAttendance = AttendanceModel()
+        ..date = missingDate
+        ..status = 'Absent';
+      await db.insertAttendance(missingAttendance);
+      missingAttendanceItems.add(missingAttendance);
+    }
+    final updatedAttendanceList = [
+      ...state.attendanceItems,
+      ...missingAttendanceItems
+    ];
+    updatedAttendanceList.sort((a, b) => b.date.compareTo(a.date));
+
+    state = state.copyWith(attendanceItems: updatedAttendanceList);
+  }
+
+  double calculateAttendancePercentage() {
+    // Calculate the total number of days and days present
+    final totalDays = state.attendanceItems.length;
+    final daysPresent =
+        state.attendanceItems.where((e) => e.status == 'Present').length;
+
+    // Calculate the percentage
+    final attendancePercentage = (daysPresent / totalDays) * 100;
+
+    return attendancePercentage;
   }
 
   bool _isAttendanceItemAlreadyAdded(
@@ -86,6 +150,7 @@ class HomeViewModel extends StateNotifier<HomeViewState> {
 
   Future<void> fetchAttendanceItems() async {
     final items = await db.fetchAttendanceItems();
-    state = state.copyWith(attendanceItems: items.reversed.toList());
+    items.sort((a, b) => b.date.compareTo(a.date));
+    state = state.copyWith(attendanceItems: items);
   }
 }
