@@ -1,5 +1,7 @@
+import 'package:attendance_app/services/local/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../const/constants.dart';
 import '../../../data/model/attendance_model.dart';
 import '../../../services/local/isar_db.dart';
 
@@ -132,9 +134,17 @@ class HomeViewModel extends StateNotifier<HomeViewState> {
         element.date.day == date.day);
   }
 
-  void calculateAttendancePercentage() {
-    // Calculate the total number of days and days present
-    final totalDays = state.attendanceItems.length;
+  void calculateAttendancePercentage() async {
+    final SharedPref prefs = SharedPref();
+
+    final String? startDate = prefs.getString(AppString.startDateKey);
+    int totalDays = 0;
+    if (startDate != null) {
+      final date = DateTime.parse(startDate);
+      totalDays = DateTime.now().difference(date).inDays + 1;
+    } else {
+      totalDays = state.attendanceItems.length;
+    }
     final daysPresent =
         state.attendanceItems.where((e) => e.status == 'Present').length;
 

@@ -7,11 +7,11 @@ class SharedPref {
     _preferences = await SharedPreferences.getInstance();
   }
 
-  Future<bool> saveQR(String key, String value) async {
+  Future<bool> setString(String key, String value) async {
     return await _preferences.setString(key, value);
   }
 
-  String? getQR(String key) {
+  String? getString(String key) {
     return _preferences.getString(key);
   }
 }

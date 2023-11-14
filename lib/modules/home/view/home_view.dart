@@ -6,6 +6,7 @@ import '../../../const/app_color.dart';
 import '../../../const/constants.dart';
 import '../../../data/widget/c_button.dart';
 import '../../../data/widget/tile.dart';
+import '../../../services/local/shared_preferences.dart';
 import '../../calendar/view/calendar_view.dart';
 import '../../scanner/view/attendance_confirmation_view.dart';
 import '../../scanner/view/scanner_view.dart';
@@ -29,6 +30,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
   }
 
   void addTodayAttendance() async {
+    SharedPref.open();
     await ref.read(homeViewModelProvider.notifier).createTodayAttendance();
   }
 

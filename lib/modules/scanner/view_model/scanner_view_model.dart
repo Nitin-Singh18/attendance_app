@@ -46,10 +46,10 @@ class ScannerViewModel extends StateNotifier<DateTime> {
 
   Future<void> saveQR(BarcodeCapture rawData) async {
     final data = _getQRData(rawData);
-    pref.saveQR(AppString.qrKey, data);
+    pref.setString(AppString.qrKey, data);
   }
 
   Future<String?> getQR() async {
-    return pref.getQR(AppString.qrKey);
+    return pref.getString(AppString.qrKey);
   }
 }
